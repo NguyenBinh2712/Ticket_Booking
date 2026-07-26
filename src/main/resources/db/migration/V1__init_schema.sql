@@ -1,6 +1,6 @@
 CREATE TABLE users (
                        id BIGINT PRIMARY KEY AUTO_INCREMENT,
-                       full_name VARCHAR(100) NOT NULL,
+                       full_name VARCHAR(100) ,
                        email VARCHAR(150) NOT NULL UNIQUE,
                        password VARCHAR(255) NULL,
                        phone VARCHAR(20),
@@ -204,4 +204,16 @@ CREATE TABLE settlements (
                              status ENUM('PENDING','PAID') NOT NULL DEFAULT 'PENDING',
                              paid_at DATETIME,
                              created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+);
+CREATE TABLE refresh_tokens (
+                                id BIGINT AUTO_INCREMENT PRIMARY KEY,
+                                token_hash VARCHAR(255) NOT NULL UNIQUE,
+                                user_id BIGINT NOT NULL,
+                                expiry_date DATETIME NOT NULL,
+                                revoked BOOLEAN DEFAULT FALSE,
+                                created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+
+                                CONSTRAINT fk_refresh_user
+                                    FOREIGN KEY(user_id)
+                                        REFERENCES users(id)
 );

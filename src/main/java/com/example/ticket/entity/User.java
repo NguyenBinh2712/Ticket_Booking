@@ -6,6 +6,7 @@ import com.example.ticket.enums.UserStatus;
 import jakarta.persistence.*;
 import lombok.*;
 import java.time.LocalDateTime;
+import java.util.Set;
 
 @Entity
 @Table(name = "users", uniqueConstraints = {
@@ -18,7 +19,7 @@ public class User {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(name = "full_name", nullable = false, length = 100)
+    @Column(name = "full_name", length = 100)
     private String fullName;
 
     @Column(nullable = false, unique = true, length = 150)
@@ -32,6 +33,12 @@ public class User {
 
     @Column(name = "avatar_url", length = 255)
     private String avatarUrl;
+
+    @Column(name = "avatar_public_id", length = 255)
+    private String  avatarPublicId;
+
+    @Column(name = "birth", length = 255)
+    private LocalDateTime birth;
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 20)
@@ -56,6 +63,10 @@ public class User {
 
     @Column(name = "updated_at")
     private LocalDateTime updatedAt;
+
+    @OneToMany(mappedBy = "user", fetch = FetchType.LAZY, cascade = CascadeType.ALL, orphanRemoval = true)
+    private Set<Otp> otp;
+
 
     @PrePersist
     protected void onCreate() { createdAt = LocalDateTime.now(); updatedAt = LocalDateTime.now(); }
