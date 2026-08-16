@@ -12,76 +12,90 @@ import lombok.experimental.FieldDefaults;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
-@RequiredArgsConstructor
-@FieldDefaults(level = AccessLevel.PRIVATE,makeFinal = true)
 @RequestMapping("/auth")
+@RequiredArgsConstructor
+@FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
 public class AuthController {
+
     AuthService authService;
 
     @PostMapping("/login")
     public ApiResponse<AuthResponse> login(
             @RequestBody @Valid AuthRequest request) {
 
-        ApiResponse apiResponse=new ApiResponse();
-        apiResponse.setResult(authService.login(request));
-        return apiResponse;
+        ApiResponse<AuthResponse> response = new ApiResponse<>();
+        response.setResult(authService.login(request));
+        response.setMessage("Login successfully");
+
+        return response;
     }
 
     @PostMapping("/logout")
     public ApiResponse<String> logout(
-            @RequestBody LogoutRequest request) {
+            @RequestBody @Valid LogoutRequest request) {
 
         authService.logout(request);
-        ApiResponse apiResponse=new ApiResponse();
-        apiResponse.setMessage("logout success");
-        return apiResponse;
+
+        ApiResponse<String> response = new ApiResponse<>();
+        response.setMessage("Logout successfully");
+
+        return response;
     }
 
     @PostMapping("/refresh")
     public ApiResponse<AuthResponse> refreshToken(
-            @RequestBody RefreshRequest request) throws Exception {
+            @RequestBody @Valid RefreshRequest request) {
 
-        ApiResponse apiResponse=new ApiResponse();
-        apiResponse.setResult(authService.refresh(request));
-        return apiResponse;
+        ApiResponse<AuthResponse> response = new ApiResponse<>();
+        response.setResult(authService.refresh(request));
+
+        return response;
     }
 
     @PostMapping("/register")
-    public ApiResponse registerUser(@RequestBody @Valid RegisterRequest request) {
-        ApiResponse apiResponse = new ApiResponse();
+    public ApiResponse<String> register(
+            @RequestBody @Valid RegisterRequest request) {
+
         authService.register(request);
-        apiResponse.setResult("register success");
-        return apiResponse;
+
+        ApiResponse<String> response = new ApiResponse<>();
+        response.setMessage("Register successfully");
+        return response;
     }
 
     @PostMapping("/register/verify")
-    public ApiResponse verifyOtp(@RequestBody OtpRequest request) {
+    public ApiResponse<String> verifyRegisterOtp(
+            @RequestBody @Valid OtpRequest request) {
         authService.verifyOtp(request);
-        ApiResponse apiResponse = new ApiResponse();
-        apiResponse.setMessage("Xác thực OTP thành công");
-        return apiResponse;
+        ApiResponse<String> response = new ApiResponse<>();
+        response.setMessage("OTP verified successfully");
+        return response;
     }
 
     @PostMapping("/register/resend-otp")
-    public ApiResponse resendOtp(@RequestBody ResendOtpRequest request) {
+    public ApiResponse<String> resendRegisterOtp(
+            @RequestBody @Valid ResendOtpRequest request) {
         authService.resendOtp(request);
-        ApiResponse apiResponse = new ApiResponse();
-        apiResponse.setMessage("Gửi lại OTP thành công");
-        return apiResponse;
+        ApiResponse<String> response = new ApiResponse<>();
+        response.setMessage("OTP sent successfully");
+        return response;
     }
+
     @PostMapping("/forgot-password/request-otp")
-    public ApiResponse requestForgotPasswordOtp(@RequestParam String email) {
+    public ApiResponse<String> requestForgotPasswordOtp(
+            @RequestParam String email) {
         authService.requestForgotPasswordOtp(email);
-        ApiResponse apiResponse = new ApiResponse();
-        apiResponse.setMessage("OTP đã được gửi đến email");
-        return apiResponse;
+        ApiResponse<String> response = new ApiResponse<>();
+        response.setMessage("OTP sent successfully");
+        return response;
     }
 
     @PutMapping("/forgot-password")
-    public ApiResponse forgotPassword(@RequestBody @Valid ForgotPasswordRequest request) {
+    public ApiResponse<String> forgotPassword(
+            @RequestBody @Valid ForgotPasswordRequest request) {
         authService.verifyOtpForgotPassword(request);
-        ApiResponse apiResponse = new ApiResponse();
-        apiResponse.setMessage("Đặt lại mật khẩu thành công");
-        return apiResponse;
+        ApiResponse<String> response = new ApiResponse<>();
+        response.setMessage("Password reset successfully");
+        return response;
     }
 }

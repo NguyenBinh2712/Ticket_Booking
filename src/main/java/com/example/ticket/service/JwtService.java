@@ -37,7 +37,7 @@ public class JwtService {
         JWSHeader jwsHeader=new JWSHeader(JWSAlgorithm.HS512);
         JWTClaimsSet jwtClaimsSet=new JWTClaimsSet.Builder()
                 .subject(jwtRequest.getEmail())
-                .issuer("DATN")
+                .issuer("ticket")
                 .issueTime(new Date())
                 .expirationTime(new Date(Instant.now().plus(VALID_DURATION, ChronoUnit.MINUTES).toEpochMilli()))
                 .jwtID(UUID.randomUUID().toString())

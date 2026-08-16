@@ -5,6 +5,8 @@ import com.example.ticket.enums.Role;
 import com.example.ticket.enums.UserStatus;
 import jakarta.persistence.*;
 import lombok.*;
+
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.Set;
 
@@ -38,7 +40,7 @@ public class User {
     private String  avatarPublicId;
 
     @Column(name = "birth", length = 255)
-    private LocalDateTime birth;
+    private LocalDate birth;
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 20)

@@ -1,5 +1,6 @@
 package com.example.ticket.service;
 
+import com.example.ticket.constant.RedisKey;
 import com.example.ticket.dto.auth.*;
 import com.example.ticket.dto.otp.OtpRequest;
 import com.example.ticket.dto.otp.ResendOtpRequest;
@@ -7,6 +8,7 @@ import com.example.ticket.entity.Otp;
 import com.example.ticket.entity.RefreshToken;
 import com.example.ticket.entity.User;
 import com.example.ticket.enums.OtpType;
+import com.example.ticket.enums.Role;
 import com.example.ticket.enums.UserStatus;
 import com.example.ticket.exception.AppException;
 import com.example.ticket.exception.ErrorCode;
@@ -16,9 +18,11 @@ import jakarta.transaction.Transactional;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
+import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import java.security.SecureRandom;
+import java.time.Duration;
 import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
@@ -28,6 +32,10 @@ import java.time.temporal.ChronoUnit;
 @FieldDefaults(level = AccessLevel.PRIVATE,makeFinal = true)
 @Transactional
 public class AuthService {
+    private static long OTP_EXPIRE_SECONDS = 60;
+    private static long OTP_WINDOW_HOURS = 1;
+    private static int MAX_OTP_PER_HOUR = 5;
+
     private static SecureRandom RANDOM = new SecureRandom();
     PasswordEncoder passwordEncoder;
     UserRepository userRepository;
@@ -35,6 +43,7 @@ public class AuthService {
     RefreshTokenService refreshTokenService;
     MailService mailService;
     OtpRepository otpRepository;
+    RedisTemplate<String, Object> redisTemplate;
 
     public AuthResponse login(AuthRequest request){
         User user=userRepository.findUserByEmail(request.getEmail())
@@ -85,17 +94,22 @@ public class AuthService {
     }
 
     public void register(RegisterRequest request){
+        if (request.getRole() == Role.ADMIN) {
+            throw new AppException(ErrorCode.INVALID_ROLE_FOR_ACTION);
+        }
         if(userRepository.existsByEmail(request.getEmail())){
             throw new AppException(ErrorCode.USER_EXISTED);
         }
         User user=User.builder()
                 .email(request.getEmail())
                 .password(passwordEncoder.encode(request.getPassword()))
+                .role(request.getRole())
                 .createdAt(LocalDateTime.now())
                 .status(UserStatus.LOCKED)
                 .build();
         userRepository.save(user);
         String otpCode =generateOtp();
+        checkOtpLimit(request.getEmail());
         Otp otp=Otp.builder()
                 .otp(otpCode)
                 .createAt(Instant.now())
@@ -118,6 +132,37 @@ public class AuthService {
         return String.valueOf(
                 100000 + RANDOM.nextInt(900000)
         );
+    }
+    private void checkOtpLimit(String email){
+        String cooldownKey = RedisKey.OTP_COOLDOWN + email;
+        String countKey = RedisKey.OTP_COUNT + email;
+        // Đang cooldown
+        if(Boolean.TRUE.equals(redisTemplate.hasKey(cooldownKey))){
+            throw new AppException(ErrorCode.OTP_SEND_TOO_FAST);
+        }
+
+        Object value = redisTemplate.opsForValue().get(countKey);
+
+        int count = value == null ? 0 : Integer.parseInt(value.toString());
+
+        if (count >= MAX_OTP_PER_HOUR) {
+            throw new AppException(ErrorCode.OTP_LIMIT_EXCEEDED);
+        }
+        // bắt đầu cooldown
+        redisTemplate.opsForValue().set(
+                cooldownKey,
+                1,
+                Duration.ofSeconds(OTP_EXPIRE_SECONDS)
+        );
+        // tăng số lần gửi
+        Long current = redisTemplate.opsForValue().increment(countKey);
+        if(current != null && current == 1){
+            redisTemplate.expire(
+                    countKey,
+                    Duration.ofHours(OTP_WINDOW_HOURS)
+            );
+        }
+
     }
 
     public void verifyOtp(OtpRequest request) {
@@ -142,11 +187,9 @@ public class AuthService {
 
         User user = userRepository.findUserByEmail(request.getEmail())
                 .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_EXISTED));
-
+        checkOtpLimit(user.getEmail());
         otpRepository.deleteByUserAndType(user, request.getType());
-
         String otpCode = generateOtp();
-
         Otp otp = Otp.builder()
                 .otp(otpCode)
                 .createAt(Instant.now())
@@ -167,9 +210,8 @@ public class AuthService {
     public void requestForgotPasswordOtp(String email) {
         User user = userRepository.findUserByEmail(email)
                 .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_EXISTED));
-
+        checkOtpLimit(user.getEmail());
         otpRepository.deleteByUserAndType(user,OtpType.FORGOT_PASSWORD);
-
         String otpCode = generateOtp();
         Otp otp = Otp.builder()
                 .otp(otpCode)

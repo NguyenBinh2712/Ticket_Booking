@@ -27,4 +27,6 @@ public class Seat {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "seat_type_id", nullable = false)
     private SeatType seatType;
+
+
 }

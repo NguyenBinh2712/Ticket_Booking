@@ -88,6 +88,7 @@ public enum ErrorCode {
     BOOKING_CANCEL_NOT_ALLOWED(1809, "Đã quá thời hạn cho phép hủy vé", HttpStatus.BAD_REQUEST),
     NO_SEATS_SELECTED(1810, "Chưa chọn ghế nào", HttpStatus.BAD_REQUEST),
     RATE_LIMIT_EXCEEDED(1811, "Bạn thao tác quá nhanh, vui lòng thử lại sau", HttpStatus.TOO_MANY_REQUESTS),
+    REJECT_REASON_REQUIRED(1107, "Cần nhập lý do khi từ chối hồ sơ", HttpStatus.BAD_REQUEST),
 
     // Payment
     PAYMENT_NOT_FOUND(1900, "Không tìm thấy giao dịch thanh toán", HttpStatus.NOT_FOUND),
@@ -115,6 +116,8 @@ public enum ErrorCode {
     // Otp
     INVALID_OTP(2200,"OTP NOT VALID",HttpStatus.BAD_REQUEST),
     OTP_EXPIRED(2201,"OTP EXPIRED",HttpStatus.BAD_REQUEST),
+    OTP_SEND_TOO_FAST(2202, "Please wait before requesting another OTP",HttpStatus.TOO_MANY_REQUESTS),
+    OTP_LIMIT_EXCEEDED(2203, "OTP request limit exceeded",HttpStatus.TOO_MANY_REQUESTS),
 
     // File
     FILE_UPLOAD_FAILED(2300,"File upload failed",HttpStatus.INTERNAL_SERVER_ERROR),
