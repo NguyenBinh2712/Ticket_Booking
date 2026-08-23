@@ -28,5 +28,12 @@ public class Seat {
     @JoinColumn(name = "seat_type_id", nullable = false)
     private SeatType seatType;
 
+    @Column(nullable = false)
+    @Builder.Default
+    private Boolean active = true;   // false = ô trống/lối đi, không bán được
+
+    @Column(name = "seat_span", nullable = false)
+    @Builder.Default
+    private Integer seatSpan = 1;    // 2 = ghế đôi, chiếm luôn ô liền kề cùng hàng
 
 }

@@ -40,6 +40,8 @@ public enum ErrorCode {
     SEAT_NOT_FOUND(1204, "Không tìm thấy ghế", HttpStatus.NOT_FOUND),
     SEAT_POSITION_DUPLICATED(1205, "Vị trí ghế đã tồn tại trong phòng này", HttpStatus.CONFLICT),
     INVALID_ROOM_LAYOUT(1206, "Số hàng/cột không hợp lệ", HttpStatus.BAD_REQUEST),
+    VENUE_NOT_VERIFIED(1108, "Địa điểm chưa được xác minh, không thể cấu hình phòng", HttpStatus.FORBIDDEN),
+    SEAT_MERGE_INVALID(1109, "Ghế đôi phải là 2 ghế liền kề cùng hàng, chưa bị gộp hay vô hiệu", HttpStatus.BAD_REQUEST),
 
     // Event
     EVENT_NOT_FOUND(1300, "Không tìm thấy sự kiện", HttpStatus.NOT_FOUND),
