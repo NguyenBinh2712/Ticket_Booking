@@ -48,9 +48,10 @@ public enum ErrorCode {
     EVENT_DETAIL_NOT_FOUND(1301, "Không tìm thấy thông tin chi tiết sự kiện", HttpStatus.NOT_FOUND),
     EVENT_NOT_EDITABLE(1302, "Sự kiện đang ở trạng thái không cho phép chỉnh sửa", HttpStatus.BAD_REQUEST),
     EVENT_NOT_OWNED_BY_PRODUCER(1303, "Sự kiện không thuộc quyền quản lý của bạn", HttpStatus.FORBIDDEN),
+    INVALID_EVENT_STATUS_TRANSITION(1400, "Không thể chuyển sang trạng thái này từ trạng thái hiện tại", HttpStatus.BAD_REQUEST),
+    PRODUCER_NOT_VERIFIED(1110, "Hồ sơ nhà sản xuất chưa được xác minh, không thể tạo sự kiện", HttpStatus.FORBIDDEN),
 
     //  Event workflow / state machine
-    INVALID_EVENT_STATUS_TRANSITION(1400, "Không thể chuyển từ trạng thái hiện tại sang trạng thái này", HttpStatus.BAD_REQUEST),
     EVENT_NOT_SUBMITTED(1401, "Sự kiện chưa được gửi duyệt", HttpStatus.BAD_REQUEST),
     EVENT_NOT_READY_TO_PUBLISH(1402, "Sự kiện chưa đủ điều kiện để công khai (thiếu hợp đồng xác nhận)", HttpStatus.BAD_REQUEST),
     EVENT_ALREADY_PUBLISHED(1403, "Sự kiện đã được công khai trước đó", HttpStatus.CONFLICT),
@@ -63,10 +64,10 @@ public enum ErrorCode {
     CONTRACT_NOT_OWNED_BY_VENUE(1503, "Hợp đồng không thuộc địa điểm của bạn", HttpStatus.FORBIDDEN),
     CONTRACT_ROOM_REQUIRED(1504, "Cần chọn phòng cụ thể khi chấp nhận hợp đồng", HttpStatus.BAD_REQUEST),
     CONTRACT_STATUS_INVALID_FOR_ACTION(1505, "Trạng thái hợp đồng không cho phép hành động này", HttpStatus.BAD_REQUEST),
-
+     SHOWTIME_TIME_OVERLAPPED(1601, "Khung giờ bị trùng với suất khác trong cùng phòng", HttpStatus.CONFLICT),
+    ROOM_NOT_OWNED_BY_VENUE(1207, "Phòng không thuộc địa điểm của bạn", HttpStatus.FORBIDDEN),
     // Showtime
     SHOWTIME_NOT_FOUND(1600, "Không tìm thấy suất chiếu/suất diễn", HttpStatus.NOT_FOUND),
-    SHOWTIME_TIME_OVERLAPPED(1601, "Khung giờ bị trùng với suất khác trong cùng phòng", HttpStatus.CONFLICT),
     SHOWTIME_ALREADY_STARTED(1602, "Suất chiếu đã bắt đầu, không thể chỉnh sửa", HttpStatus.BAD_REQUEST),
     SHOWTIME_CANCELLED(1603, "Suất chiếu đã bị hủy", HttpStatus.BAD_REQUEST),
 

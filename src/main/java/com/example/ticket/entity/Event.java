@@ -40,9 +40,11 @@ public class Event {
 
     @Column(name = "avg_rating", precision = 3, scale = 2)
     @Builder.Default
-    private BigDecimal avgRating = BigDecimal.ZERO; // đồng bộ từ Mongo reviews
+    private BigDecimal avgRating = BigDecimal.ZERO;
 
-    // id document trong Mongo (event_details) chứa metadata đặc thù theo type
+    @Column(name = "producer_share_percent", precision = 5, scale = 2)
+    private BigDecimal producerSharePercent;
+
     @Column(name = "detail_doc_id", length = 50)
     private String detailDocId;
 
