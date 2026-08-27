@@ -28,7 +28,7 @@ public class RefreshTokenService {
         String token= UUID.randomUUID().toString();
         refreshTokenRepository.deleteByUser(user);
         RefreshToken refreshToken=RefreshToken.builder()
-                .tokenHash(token)
+                .rawToken(token)
                 .user(user)
                 .expiryDate(
                         Instant.now().plus(refreshDuration, ChronoUnit.DAYS)

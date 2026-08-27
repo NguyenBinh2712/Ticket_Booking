@@ -47,15 +47,33 @@ public class RoomService {
         return venue;
     }
 
+    // service/RoomService.java — thay hàm createRoom() bằng bản này, các hàm khác giữ nguyên
+
     public RoomResponse createRoom(RoomRequest request) {
         VenueProfile venue = getCurrentVerifiedVenue();
-
         if (roomRepository.existsByVenueAndName(venue, request.getName())) {
             throw new AppException(ErrorCode.ROOM_NAME_DUPLICATED);
         }
 
         SeatType defaultSeatType = seatTypeRepository.findById(request.getDefaultSeatTypeId())
                 .orElseThrow(() -> new AppException(ErrorCode.SEAT_TYPE_NOT_FOUND));
+
+        // Khu VIP optional -- chỉ áp dụng nếu venue thực sự khai báo (vipRows/vipColumns > 0)
+        boolean hasVipZone = request.getVipRows() != null && request.getVipRows() > 0
+                && request.getVipColumns() != null && request.getVipColumns() > 0;
+
+        SeatType vipSeatType = null;
+        if (hasVipZone) {
+            if (request.getVipSeatTypeId() == null) {
+                throw new AppException(ErrorCode.SEAT_TYPE_NOT_FOUND);
+            }
+            vipSeatType = seatTypeRepository.findById(request.getVipSeatTypeId())
+                    .orElseThrow(() -> new AppException(ErrorCode.SEAT_TYPE_NOT_FOUND));
+
+            if (request.getVipRows() > request.getTotalRows() || request.getVipColumns() > request.getTotalColumns()) {
+                throw new AppException(ErrorCode.INVALID_ROOM_LAYOUT);
+            }
+        }
 
         Room room = Room.builder()
                 .venue(venue)
@@ -66,16 +84,37 @@ public class RoomService {
                 .build();
         room = roomRepository.save(room);
 
+        int vipRowStart = -1, vipRowEnd = -1, vipColStart = -1, vipColEnd = -1;
+        if (hasVipZone) {
+            vipRowStart = (request.getTotalRows() - request.getVipRows()) / 2;
+            vipRowEnd = vipRowStart + request.getVipRows();
+            vipColStart = (request.getTotalColumns() - request.getVipColumns()) / 2 + 1;
+            vipColEnd = vipColStart + request.getVipColumns();
+        }
+
+        List<Integer> aisleRows = request.getAisleRows() != null ? request.getAisleRows() : List.of();
+        List<Integer> aisleColumns = request.getAisleColumns() != null ? request.getAisleColumns() : List.of();
+
         List<Seat> seats = new ArrayList<>();
         for (int r = 0; r < request.getTotalRows(); r++) {
             String rowLabel = toRowLabel(r);
+            boolean wholeRowIsAisle = aisleRows.contains(r);
+
             for (int c = 1; c <= request.getTotalColumns(); c++) {
+                boolean isAisle = wholeRowIsAisle || aisleColumns.contains(c);
+
+                boolean isVip = hasVipZone
+                        && r >= vipRowStart && r < vipRowEnd
+                        && c >= vipColStart && c < vipColEnd;
+
+                SeatType typeForThisSeat = isVip ? vipSeatType : defaultSeatType;
+
                 seats.add(Seat.builder()
                         .room(room)
                         .seatRow(rowLabel)
                         .seatNumber(c)
-                        .seatType(defaultSeatType)
-                        .active(true)
+                        .seatType(typeForThisSeat)
+                        .active(!isAisle)   // lối đi -> active = false, không bán được
                         .seatSpan(1)
                         .build());
             }
@@ -84,7 +123,6 @@ public class RoomService {
 
         return toResponse(room);
     }
-
     public List<RoomResponse> getMyRooms() {
         VenueProfile venue = getCurrentVerifiedVenue();
         return roomRepository.findByVenue(venue)

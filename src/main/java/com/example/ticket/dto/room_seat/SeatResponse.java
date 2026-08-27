@@ -12,4 +12,5 @@ public class SeatResponse {
     private String extraPrice;
     private Boolean active;
     private Integer seatSpan;
+    private Boolean aisle;
 }

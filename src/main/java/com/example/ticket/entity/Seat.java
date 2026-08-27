@@ -30,10 +30,11 @@ public class Seat {
 
     @Column(nullable = false)
     @Builder.Default
-    private Boolean active = true;   // false = ô trống/lối đi, không bán được
-
+    private Boolean active = true;
     @Column(name = "seat_span", nullable = false)
     @Builder.Default
     private Integer seatSpan = 1;    // 2 = ghế đôi, chiếm luôn ô liền kề cùng hàng
 
+    @Column(nullable = false)
+    private Boolean aisle;
 }

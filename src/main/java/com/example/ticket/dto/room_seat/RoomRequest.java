@@ -5,6 +5,8 @@ import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import lombok.*;
 
+import java.util.List;
+
 @Getter @Setter @NoArgsConstructor @AllArgsConstructor @Builder
 public class RoomRequest {
     @NotBlank(message = "Tên phòng không được để trống")
@@ -20,4 +22,18 @@ public class RoomRequest {
 
     @NotNull(message = "Phải chọn loại ghế mặc định")
     private Long defaultSeatTypeId;
+
+    @NotNull
+    private Long vipSeatTypeId;
+
+    @Min(value = 0, message = "Số hàng phải lớn hơn hoặc = 0")
+    private Integer vipColumns;
+
+    @Min(value = 0, message = "Số cột phải lớn hơn hoặc = 0")
+    private Integer vipRows;
+
+    //hàng cot lam noi di
+    private List<Integer> aisleRows;
+    private List<Integer> aisleColumns;
+
 }

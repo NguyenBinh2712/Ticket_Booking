@@ -2,6 +2,7 @@ package com.example.ticket.exception;
 
 
 import com.example.ticket.dto.ApiResponse;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ControllerAdvice;
@@ -33,19 +34,16 @@ public class GlobalException {
     }
 
     @ExceptionHandler(value = MethodArgumentNotValidException.class)
-    ResponseEntity<ApiResponse> handlerValidatorException(MethodArgumentNotValidException exception){
-        String enumKey=exception.getFieldError().getDefaultMessage();
-        ErrorCode errorCode=ErrorCode.INVALID_KEY;
-        try{
-            errorCode=ErrorCode.valueOf(enumKey);
-        }catch (IllegalArgumentException e){
+    ResponseEntity<ApiResponse> handlerValidatorException(MethodArgumentNotValidException exception) {
+        String message = exception.getFieldError() != null
+                ? exception.getFieldError().getDefaultMessage()
+                : ErrorCode.VALIDATION_ERROR.getMessage();
 
-        }
-        ApiResponse apiResponse=ApiResponse.builder()
-                .code(errorCode.getCode())
-                .message(errorCode.getMessage())
+        ApiResponse apiResponse = ApiResponse.builder()
+                .code(ErrorCode.VALIDATION_ERROR.getCode())
+                .message(message)
                 .build();
-        return ResponseEntity.status(errorCode.getHttpStatus()).body(apiResponse);
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(apiResponse);
     }
 
     @ExceptionHandler(value = AccessDeniedException.class)

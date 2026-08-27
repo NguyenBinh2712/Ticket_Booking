@@ -73,7 +73,7 @@ public class AuthService {
     public AuthResponse refresh(RefreshRequest request){
         RefreshToken oldToken = refreshTokenService.verify(request.getToken());
         User user = oldToken.getUser();
-        refreshTokenService.revoked(oldToken.getTokenHash());
+        refreshTokenService.revoked(oldToken.getRawToken());
         JwtRequest jwtRequest=JwtRequest.builder()
                 .userId(user.getId())
                 .email(user.getEmail())
@@ -133,36 +133,23 @@ public class AuthService {
                 100000 + RANDOM.nextInt(900000)
         );
     }
-    private void checkOtpLimit(String email){
+    private void checkOtpLimit(String email) {
         String cooldownKey = RedisKey.OTP_COOLDOWN + email;
         String countKey = RedisKey.OTP_COUNT + email;
-        // Đang cooldown
-        if(Boolean.TRUE.equals(redisTemplate.hasKey(cooldownKey))){
+        // Atomic: chỉ set được nếu key CHƯA tồn tại (SETNX) -
+        Boolean acquired = redisTemplate.opsForValue()
+                .setIfAbsent(cooldownKey, 1, Duration.ofSeconds(OTP_EXPIRE_SECONDS));
+        if (Boolean.FALSE.equals(acquired)) {
             throw new AppException(ErrorCode.OTP_SEND_TOO_FAST);
         }
-
-        Object value = redisTemplate.opsForValue().get(countKey);
-
-        int count = value == null ? 0 : Integer.parseInt(value.toString());
-
-        if (count >= MAX_OTP_PER_HOUR) {
+        Long current = redisTemplate.opsForValue().increment(countKey);
+        if (current != null && current == 1) {
+            redisTemplate.expire(countKey, Duration.ofHours(OTP_WINDOW_HOURS));
+        }
+        if (current != null && current > MAX_OTP_PER_HOUR) {
+            redisTemplate.opsForValue().decrement(countKey);
             throw new AppException(ErrorCode.OTP_LIMIT_EXCEEDED);
         }
-        // bắt đầu cooldown
-        redisTemplate.opsForValue().set(
-                cooldownKey,
-                1,
-                Duration.ofSeconds(OTP_EXPIRE_SECONDS)
-        );
-        // tăng số lần gửi
-        Long current = redisTemplate.opsForValue().increment(countKey);
-        if(current != null && current == 1){
-            redisTemplate.expire(
-                    countKey,
-                    Duration.ofHours(OTP_WINDOW_HOURS)
-            );
-        }
-
     }
 
     public void verifyOtp(OtpRequest request) {
@@ -188,18 +175,16 @@ public class AuthService {
         User user = userRepository.findUserByEmail(request.getEmail())
                 .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_EXISTED));
         checkOtpLimit(user.getEmail());
-        otpRepository.deleteByUserAndType(user, request.getType());
+        otpRepository.deleteByUserAndType(user, OtpType.REGISTER);
         String otpCode = generateOtp();
         Otp otp = Otp.builder()
                 .otp(otpCode)
                 .createAt(Instant.now())
                 .exp(Instant.now().plus(60, ChronoUnit.SECONDS))
                 .user(user)
-                .type(request.getType())
+                .type(OtpType.REGISTER)
                 .build();
-
         otpRepository.save(otp);
-
         mailService.sendEmail(
                 user.getEmail(),
                 "Xác thực tài khoản",
@@ -208,28 +193,26 @@ public class AuthService {
     }
 
     public void requestForgotPasswordOtp(String email) {
-        User user = userRepository.findUserByEmail(email)
-                .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_EXISTED));
-        checkOtpLimit(user.getEmail());
-        otpRepository.deleteByUserAndType(user,OtpType.FORGOT_PASSWORD);
-        String otpCode = generateOtp();
-        Otp otp = Otp.builder()
-                .otp(otpCode)
-                .createAt(Instant.now())
-                .exp(Instant.now().plus(60, ChronoUnit.SECONDS))
-                .user(user)
-                .type(OtpType.FORGOT_PASSWORD)
-                .build();
+        userRepository.findUserByEmail(email).ifPresent(user -> {
+            checkOtpLimit(user.getEmail());
+            otpRepository.deleteByUserAndType(user, OtpType.FORGOT_PASSWORD);
+            String otpCode = generateOtp();
+            Otp otp = Otp.builder()
+                    .otp(otpCode)
+                    .createAt(Instant.now())
+                    .exp(Instant.now().plus(60, ChronoUnit.SECONDS))
+                    .user(user)
+                    .type(OtpType.FORGOT_PASSWORD)
+                    .build();
+            otpRepository.save(otp);
 
-        otpRepository.save(otp);
-
-        mailService.sendEmail(
-                user.getEmail(),
-                "Yêu cầu đặt lại mật khẩu",
-                "Mã xác thực để đặt lại mật khẩu: " + otpCode + "\nHiệu lực trong 60 giây."
-        );
+            mailService.sendEmail(
+                    user.getEmail(),
+                    "Yêu cầu đặt lại mật khẩu",
+                    "Mã xác thực để đặt lại mật khẩu: " + otpCode + "\nHiệu lực trong 60 giây."
+            );
+        });
     }
-
     public void verifyOtpForgotPassword(ForgotPasswordRequest request) {
         User user = userRepository.findUserByEmail(request.getEmail())
                 .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_EXISTED));
