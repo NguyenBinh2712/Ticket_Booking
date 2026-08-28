@@ -42,6 +42,9 @@ public class SecurityConfig {
 
             "/events/**",
             "/showtimes/**",
+
+            "/payments/momo/ipn",
+            "/payments/momo/return",
     };
 
     @Bean

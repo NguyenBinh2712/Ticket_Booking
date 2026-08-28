@@ -4,6 +4,7 @@ import com.example.ticket.enums.PaymentMethod;
 import com.example.ticket.enums.PaymentStatus;
 import jakarta.persistence.*;
 import lombok.*;
+
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
@@ -27,17 +28,14 @@ public class Payment {
     @Column(nullable = false, precision = 10, scale = 2)
     private BigDecimal amount;
 
-    @Column(name = "vnp_txn_ref", nullable = false, unique = true, length = 100)
-    private String vnpTxnRef;
+    @Column(name = "txn_ref", nullable = false, unique = true, length = 100)
+    private String txnRef; // mã đơn hàng tự sinh, gửi cho cổng thanh toán
 
-    @Column(name = "vnp_transaction_no", length = 100)
-    private String vnpTransactionNo;
+    @Column(name = "gateway_transaction_no", length = 100)
+    private String gatewayTransactionNo; // mã giao dịch cổng trả về
 
-    @Column(name = "vnp_response_code", length = 10)
-    private String vnpResponseCode;
-
-    @Column(name = "vnp_bank_code", length = 20)
-    private String vnpBankCode;
+    @Column(name = "response_code", length = 10)
+    private String responseCode;
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 20)

@@ -99,18 +99,19 @@ public enum ErrorCode {
     // Payment
     PAYMENT_NOT_FOUND(1900, "Không tìm thấy giao dịch thanh toán", HttpStatus.NOT_FOUND),
     PAYMENT_ALREADY_PROCESSED(1901, "Giao dịch đã được xử lý trước đó", HttpStatus.CONFLICT),
-    PAYMENT_SIGNATURE_INVALID(1902, "Chữ ký giao dịch không hợp lệ (nghi ngờ giả mạo)", HttpStatus.BAD_REQUEST),
+    PAYMENT_SIGNATURE_INVALID(1902, "Chữ ký giao dịch không hợp lệ", HttpStatus.BAD_REQUEST),
     PAYMENT_AMOUNT_MISMATCH(1903, "Số tiền thanh toán không khớp với đơn hàng", HttpStatus.BAD_REQUEST),
-    PAYMENT_FAILED(1904, "Thanh toán thất bại", HttpStatus.BAD_REQUEST),
     PAYMENT_GATEWAY_ERROR(1905, "Lỗi kết nối tới cổng thanh toán", HttpStatus.INTERNAL_SERVER_ERROR),
-
-    // Revenue & Settlement
+    INVALID_PAYMENT_METHOD(1906, "Phương thức thanh toán không hợp lệ", HttpStatus.BAD_REQUEST),
+    BOOKING_EXPIRED(1810, "Đơn đặt vé đã hết hạn thanh toán", HttpStatus.BAD_REQUEST),
     REVENUE_TRANSACTION_NOT_FOUND(2000, "Không tìm thấy giao dịch doanh thu", HttpStatus.NOT_FOUND),
+    TRANSACTION_ALREADY_SETTLED(2005, "Giao dịch đã được đối soát, không thể hoàn tác", HttpStatus.CONFLICT),
+    PAYMENT_FAILED(1904, "Thanh toán thất bại", HttpStatus.BAD_REQUEST),
+    // Revenue & Settlement
     SETTLEMENT_NOT_FOUND(2001, "Không tìm thấy đợt đối soát", HttpStatus.NOT_FOUND),
     SETTLEMENT_ALREADY_PAID(2002, "Đợt đối soát này đã được thanh toán", HttpStatus.CONFLICT),
     SETTLEMENT_PERIOD_INVALID(2003, "Khoảng thời gian đối soát không hợp lệ", HttpStatus.BAD_REQUEST),
     SETTLEMENT_NO_TRANSACTIONS(2004, "Không có giao dịch nào trong kỳ đối soát này", HttpStatus.BAD_REQUEST),
-    TRANSACTION_ALREADY_SETTLED(2005, "Giao dịch đã được đối soát, không thể hoàn tác", HttpStatus.CONFLICT),
 
     // Review & Notification
     REVIEW_NOT_ALLOWED(2100, "Bạn cần tham gia sự kiện này trước khi đánh giá", HttpStatus.FORBIDDEN),

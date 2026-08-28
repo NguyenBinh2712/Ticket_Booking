@@ -3,6 +3,7 @@ package com.example.ticket.entity;
 import com.example.ticket.enums.TransactionStatus;
 import jakarta.persistence.*;
 import lombok.*;
+
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
