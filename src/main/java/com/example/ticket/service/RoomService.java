@@ -114,7 +114,8 @@ public class RoomService {
                         .seatRow(rowLabel)
                         .seatNumber(c)
                         .seatType(typeForThisSeat)
-                        .active(!isAisle)   // lối đi -> active = false, không bán được
+                        .active(!isAisle)
+                        .aisle(isAisle)
                         .seatSpan(1)
                         .build());
             }

@@ -41,7 +41,7 @@ public class RefreshTokenService {
     }
 
     public RefreshToken verify(String token){
-        RefreshToken refreshToken=refreshTokenRepository.findByTokenHash(token)
+        RefreshToken refreshToken=refreshTokenRepository.findByRawToken(token)
                 .orElseThrow(()-> new AppException(ErrorCode.UNAUTHENTICATED));
 
         if(refreshToken.isRevoked()){

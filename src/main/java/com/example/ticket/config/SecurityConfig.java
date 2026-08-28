@@ -38,7 +38,10 @@ public class SecurityConfig {
             "/doan/ws-chat/**",
             "/doan/test/public/**",
 
-            "/ws-chat/**"
+            "/ws-chat/**",
+
+            "/events/**",
+            "/showtimes/**",
     };
 
     @Bean

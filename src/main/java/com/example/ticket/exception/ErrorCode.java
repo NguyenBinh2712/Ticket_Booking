@@ -50,7 +50,7 @@ public enum ErrorCode {
     EVENT_NOT_OWNED_BY_PRODUCER(1303, "Sự kiện không thuộc quyền quản lý của bạn", HttpStatus.FORBIDDEN),
     INVALID_EVENT_STATUS_TRANSITION(1400, "Không thể chuyển sang trạng thái này từ trạng thái hiện tại", HttpStatus.BAD_REQUEST),
     PRODUCER_NOT_VERIFIED(1110, "Hồ sơ nhà sản xuất chưa được xác minh, không thể tạo sự kiện", HttpStatus.FORBIDDEN),
-
+    EVENT_NOT_PUBLISHED(1304, "Sự kiện chưa được công khai", HttpStatus.NOT_FOUND),
     //  Event workflow / state machine
     EVENT_NOT_SUBMITTED(1401, "Sự kiện chưa được gửi duyệt", HttpStatus.BAD_REQUEST),
     EVENT_NOT_READY_TO_PUBLISH(1402, "Sự kiện chưa đủ điều kiện để công khai (thiếu hợp đồng xác nhận)", HttpStatus.BAD_REQUEST),

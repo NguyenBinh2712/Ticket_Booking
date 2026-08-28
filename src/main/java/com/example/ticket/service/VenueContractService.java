@@ -63,7 +63,7 @@ public class VenueContractService {
             throw new AppException(ErrorCode.SHOWTIME_TIME_OVERLAPPED);
         }
 
-        boolean overlapped = showtimeRepository.existsByRoomAndStatusNotAndStartTimeLessThanAndEndTimeGreaterThan(
+        boolean overlapped = showtimeRepository.existsByContract_RoomAndStatusNotAndStartTimeLessThanAndEndTimeGreaterThan(
                 room, ShowtimeStatus.CANCELLED, request.getEndTime(), request.getStartTime());
         if (overlapped) {
             throw new AppException(ErrorCode.SHOWTIME_TIME_OVERLAPPED);
@@ -101,11 +101,12 @@ public class VenueContractService {
 
         Event event = contract.getEvent();
         if (event.getStatus() == EventStatus.PENDING_VENUE_APPROVAL) {
-            eventService.changeStatus(event, EventStatus.MATCHING,
+            eventService.changeStatus(event, EventStatus.VENUE_REJECTED,
                     "Venue " + venue.getVenueName() + " từ chối: " + request.getRejectReason());
+            eventService.changeStatus(event, EventStatus.MATCHING,
+                    "Quay lại tìm venue khác");
         }
     }
-
     private ContractResponse toResponse(EventVenueContract c) {
         return ContractResponse.builder()
                 .id(c.getId())
