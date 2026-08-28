@@ -92,6 +92,9 @@ public enum ErrorCode {
     NO_SEATS_SELECTED(1810, "Chưa chọn ghế nào", HttpStatus.BAD_REQUEST),
     RATE_LIMIT_EXCEEDED(1811, "Bạn thao tác quá nhanh, vui lòng thử lại sau", HttpStatus.TOO_MANY_REQUESTS),
     REJECT_REASON_REQUIRED(1107, "Cần nhập lý do khi từ chối hồ sơ", HttpStatus.BAD_REQUEST),
+    SEAT_NOT_IN_ROOM(1807, "Ghế không thuộc phòng của suất chiếu này", HttpStatus.BAD_REQUEST),
+    SEAT_INACTIVE(1808, "Ghế này không thể đặt (lối đi hoặc đã bị vô hiệu)", HttpStatus.BAD_REQUEST),
+    SHOWTIME_NOT_AVAILABLE(1809, "Suất chiếu không còn khả dụng để đặt vé", HttpStatus.BAD_REQUEST),
 
     // Payment
     PAYMENT_NOT_FOUND(1900, "Không tìm thấy giao dịch thanh toán", HttpStatus.NOT_FOUND),

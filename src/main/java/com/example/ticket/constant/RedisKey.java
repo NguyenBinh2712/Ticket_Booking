@@ -5,4 +5,6 @@ public class RedisKey {
 
     public static final String OTP_COOLDOWN = "otp:cooldown:";
     public static final String OTP_COUNT = "otp:count:";
+
+    public static final String SEAT_HOLD = "seat_hold:";
 }

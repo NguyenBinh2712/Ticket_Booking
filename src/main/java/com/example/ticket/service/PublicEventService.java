@@ -3,6 +3,7 @@ package com.example.ticket.service;
 
 import com.example.ticket.document.EventDetail;
 import com.example.ticket.dto.event.PublicEventResponse;
+import com.example.ticket.dto.event.SeatAvailabilityResponse;
 import com.example.ticket.dto.room_seat.SeatResponse;
 import com.example.ticket.dto.event.PublicShowtimeResponse;
 import com.example.ticket.dto.event.ShowtimeSeatMapResponse;
@@ -13,10 +14,7 @@ import com.example.ticket.enums.EventStatus;
 import com.example.ticket.enums.EventType;
 import com.example.ticket.exception.AppException;
 import com.example.ticket.exception.ErrorCode;
-import com.example.ticket.repository.EventDetailRepository;
-import com.example.ticket.repository.EventRepository;
-import com.example.ticket.repository.SeatRepository;
-import com.example.ticket.repository.ShowtimeRepository;
+import com.example.ticket.repository.*;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
@@ -31,11 +29,12 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 @FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
 public class PublicEventService {
+    BookingSeatRepository bookingSeatRepository;
+    SeatHoldService seatHoldService;
 
-    // Sự kiện ở các trạng thái này mới được xem công khai -- DRAFT/SUBMITTED/... không được lộ ra ngoài
+    // Sự kiện ở các trạng thái này mới được xem công khai
     private static final Set<EventStatus> VISIBLE_STATUSES =
             EnumSet.of(EventStatus.PUBLISHED, EventStatus.ONGOING, EventStatus.COMPLETED);
-
     EventRepository eventRepository;
     EventDetailRepository eventDetailRepository;
     ShowtimeRepository showtimeRepository;
@@ -52,7 +51,7 @@ public class PublicEventService {
         Event event = eventRepository.findById(eventId)
                 .orElseThrow(() -> new AppException(ErrorCode.EVENT_NOT_FOUND));
         if (!VISIBLE_STATUSES.contains(event.getStatus())) {
-            throw new AppException(ErrorCode.EVENT_NOT_FOUND); // không tiết lộ event chưa publish tồn tại hay không
+            throw new AppException(ErrorCode.EVENT_NOT_FOUND);
         }
         return toEventResponse(event);
     }
@@ -136,6 +135,37 @@ public class PublicEventService {
                 .ticketPrice(s.getTicketPrice())
                 .status(s.getStatus())
                 .build();
+    }
+    public List<SeatAvailabilityResponse> getSeatAvailability(Long showtimeId) {
+        Showtime showtime = showtimeRepository.findById(showtimeId)
+                .orElseThrow(() -> new AppException(ErrorCode.SHOWTIME_NOT_FOUND));
+
+        Room room = showtime.getContract().getRoom();
+        List<Long> bookedSeatIds = bookingSeatRepository.findByShowtimeId(showtimeId)
+                .stream().map(bs -> bs.getSeat().getId()).toList();
+
+        return seatRepository.findByRoomOrderBySeatRowAscSeatNumberAsc(room).stream()
+                .map(seat -> {
+                    String status;
+                    if (bookedSeatIds.contains(seat.getId())) {
+                        status = "BOOKED";
+                    } else if (seatHoldService.getHoldOwner(showtimeId, seat.getId()) != null) {
+                        status = "HELD";
+                    } else {
+                        status = "AVAILABLE";
+                    }
+                    return SeatAvailabilityResponse.builder()
+                            .seatId(seat.getId())
+                            .seatRow(seat.getSeatRow())
+                            .seatNumber(seat.getSeatNumber())
+                            .seatTypeName(seat.getSeatType().getName())
+                            .extraPrice(seat.getSeatType().getExtraPrice().toString())
+                            .seatSpan(seat.getSeatSpan())
+                            .active(seat.getActive())
+                            .status(seat.getActive() ? status : "INACTIVE")
+                            .build();
+                })
+                .collect(Collectors.toList());
     }
 
     private SeatResponse toSeatResponse(com.example.ticket.entity.Seat seat) {
