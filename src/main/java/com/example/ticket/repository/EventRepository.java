@@ -14,4 +14,5 @@ public interface EventRepository extends JpaRepository<Event, Long> {
     Optional<Event> findByIdAndProducer(Long id, ProducerProfile producer);
     List<Event> findByStatus(EventStatus status);
     List<Event> findByStatusAndType(EventStatus status, EventType type);
+    long countByStatusIn(List<EventStatus> statuses);
 }

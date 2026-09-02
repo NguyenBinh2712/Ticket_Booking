@@ -1,3 +1,4 @@
+// dto/room_seat/RoomRequest.java
 package com.example.ticket.dto.room_seat;
 
 import jakarta.validation.constraints.Min;
@@ -15,25 +16,16 @@ public class RoomRequest {
     @NotNull(message = "Số hàng ghế không được để trống")
     @Min(value = 1, message = "Số hàng phải lớn hơn 0")
     private Integer totalRows;
-
     @NotNull(message = "Số cột ghế không được để trống")
     @Min(value = 1, message = "Số cột phải lớn hơn 0")
     private Integer totalColumns;
-
     @NotNull(message = "Phải chọn loại ghế mặc định")
     private Long defaultSeatTypeId;
-
-    @NotNull
     private Long vipSeatTypeId;
-
     @Min(value = 0, message = "Số hàng phải lớn hơn hoặc = 0")
-    private Integer vipColumns;
-
-    @Min(value = 0, message = "Số cột phải lớn hơn hoặc = 0")
     private Integer vipRows;
-
-    //hàng cot lam noi di
+    @Min(value = 0, message = "Số cột phải lớn hơn hoặc = 0")
+    private Integer vipColumns;
     private List<Integer> aisleRows;
     private List<Integer> aisleColumns;
-
 }

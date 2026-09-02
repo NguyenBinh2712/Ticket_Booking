@@ -14,13 +14,12 @@ import org.springframework.security.access.AccessDeniedException;
 public class GlobalException {
 
     @ExceptionHandler(value = RuntimeException.class)
-    ResponseEntity<ApiResponse> handlerRuntimeException(RuntimeException exception){
-
-        ApiResponse apiResponse=ApiResponse.builder()
-                .code(9999)
-                .message(exception.getMessage())
+    ResponseEntity<ApiResponse> handlerRuntimeException(RuntimeException exception) {
+        ApiResponse apiResponse = ApiResponse.builder()
+                .code(ErrorCode.UNCATEGORIZED_EXCEPTION.getCode())
+                .message(ErrorCode.UNCATEGORIZED_EXCEPTION.getMessage())
                 .build();
-        return ResponseEntity.badRequest().body(apiResponse);
+        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(apiResponse);
     }
 
     @ExceptionHandler(value = AppException.class)
@@ -55,5 +54,14 @@ public class GlobalException {
                         .message(errorCode.getMessage())
                         .build()
         );
+    }
+
+    @ExceptionHandler(value = Exception.class)
+    ResponseEntity<ApiResponse> handlerGenericException(Exception exception) {
+        ApiResponse apiResponse = ApiResponse.builder()
+                .code(ErrorCode.UNCATEGORIZED_EXCEPTION.getCode())
+                .message(ErrorCode.UNCATEGORIZED_EXCEPTION.getMessage())
+                .build();
+        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(apiResponse);
     }
 }

@@ -92,9 +92,6 @@ public enum ErrorCode {
     NO_SEATS_SELECTED(1810, "Chưa chọn ghế nào", HttpStatus.BAD_REQUEST),
     RATE_LIMIT_EXCEEDED(1811, "Bạn thao tác quá nhanh, vui lòng thử lại sau", HttpStatus.TOO_MANY_REQUESTS),
     REJECT_REASON_REQUIRED(1107, "Cần nhập lý do khi từ chối hồ sơ", HttpStatus.BAD_REQUEST),
-    SEAT_NOT_IN_ROOM(1807, "Ghế không thuộc phòng của suất chiếu này", HttpStatus.BAD_REQUEST),
-    SEAT_INACTIVE(1808, "Ghế này không thể đặt (lối đi hoặc đã bị vô hiệu)", HttpStatus.BAD_REQUEST),
-    SHOWTIME_NOT_AVAILABLE(1809, "Suất chiếu không còn khả dụng để đặt vé", HttpStatus.BAD_REQUEST),
 
     // Payment
     PAYMENT_NOT_FOUND(1900, "Không tìm thấy giao dịch thanh toán", HttpStatus.NOT_FOUND),
@@ -103,7 +100,6 @@ public enum ErrorCode {
     PAYMENT_AMOUNT_MISMATCH(1903, "Số tiền thanh toán không khớp với đơn hàng", HttpStatus.BAD_REQUEST),
     PAYMENT_GATEWAY_ERROR(1905, "Lỗi kết nối tới cổng thanh toán", HttpStatus.INTERNAL_SERVER_ERROR),
     INVALID_PAYMENT_METHOD(1906, "Phương thức thanh toán không hợp lệ", HttpStatus.BAD_REQUEST),
-    BOOKING_EXPIRED(1810, "Đơn đặt vé đã hết hạn thanh toán", HttpStatus.BAD_REQUEST),
     REVENUE_TRANSACTION_NOT_FOUND(2000, "Không tìm thấy giao dịch doanh thu", HttpStatus.NOT_FOUND),
     TRANSACTION_ALREADY_SETTLED(2005, "Giao dịch đã được đối soát, không thể hoàn tác", HttpStatus.CONFLICT),
     PAYMENT_FAILED(1904, "Thanh toán thất bại", HttpStatus.BAD_REQUEST),
@@ -130,6 +126,13 @@ public enum ErrorCode {
     FILE_UPLOAD_FAILED(2300,"File upload failed",HttpStatus.INTERNAL_SERVER_ERROR),
     FILE_EMPTY(2301,"File empty",HttpStatus.BAD_REQUEST),
 
+
+
+
+    SEAT_NOT_IN_ROOM(1812, "Ghế không thuộc phòng của suất chiếu này", HttpStatus.BAD_REQUEST),
+    SEAT_INACTIVE(1813, "Ghế này không thể đặt (lối đi hoặc đã bị vô hiệu)", HttpStatus.BAD_REQUEST),
+    SHOWTIME_NOT_AVAILABLE(1814, "Suất chiếu không còn khả dụng để đặt vé", HttpStatus.BAD_REQUEST),
+    BOOKING_EXPIRED(1815, "Đơn đặt vé đã hết hạn thanh toán", HttpStatus.BAD_REQUEST),
     ;
 
     private int code;

@@ -44,6 +44,9 @@ public class RevenueTransaction {
     @Column(name = "created_at", updatable = false)
     private LocalDateTime createdAt;
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "settlement_id")
+    private Settlement settlement;
     @PrePersist
     protected void onCreate() { createdAt = LocalDateTime.now(); }
 }

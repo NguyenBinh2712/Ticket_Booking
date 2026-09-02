@@ -43,6 +43,9 @@ public class VenueProfile {
     @Column(name = "created_at", updatable = false)
     private LocalDateTime createdAt;
 
+    @Column(name = "reject_reason", columnDefinition = "TEXT")
+    private String rejectReason;
+
     @OneToMany(mappedBy = "venue", cascade = CascadeType.ALL, orphanRemoval = true)
     @Builder.Default
     private List<Room> rooms = new ArrayList<>();

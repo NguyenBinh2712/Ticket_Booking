@@ -47,8 +47,6 @@ public class RoomService {
         return venue;
     }
 
-    // service/RoomService.java — thay hàm createRoom() bằng bản này, các hàm khác giữ nguyên
-
     public RoomResponse createRoom(RoomRequest request) {
         VenueProfile venue = getCurrentVerifiedVenue();
         if (roomRepository.existsByVenueAndName(venue, request.getName())) {
@@ -86,7 +84,7 @@ public class RoomService {
 
         int vipRowStart = -1, vipRowEnd = -1, vipColStart = -1, vipColEnd = -1;
         if (hasVipZone) {
-            vipRowStart = (request.getTotalRows() - request.getVipRows()) / 2;
+            vipRowStart = (request.getTotalRows() - request.getVipRows()) / 2+1;
             vipRowEnd = vipRowStart + request.getVipRows();
             vipColStart = (request.getTotalColumns() - request.getVipColumns()) / 2 + 1;
             vipColEnd = vipColStart + request.getVipColumns();
@@ -96,8 +94,8 @@ public class RoomService {
         List<Integer> aisleColumns = request.getAisleColumns() != null ? request.getAisleColumns() : List.of();
 
         List<Seat> seats = new ArrayList<>();
-        for (int r = 0; r < request.getTotalRows(); r++) {
-            String rowLabel = toRowLabel(r);
+        for (int r = 1; r <= request.getTotalRows(); r++) {
+            String rowLabel = toRowLabel(r-1);
             boolean wholeRowIsAisle = aisleRows.contains(r);
 
             for (int c = 1; c <= request.getTotalColumns(); c++) {

@@ -38,6 +38,9 @@ public class ProducerProfile {
     @Column(name = "created_at", updatable = false)
     private LocalDateTime createdAt;
 
+    @Column(name = "reject_reason", columnDefinition = "TEXT")
+    private String rejectReason;
+
     @PrePersist
     protected void onCreate() { createdAt = LocalDateTime.now(); }
 }

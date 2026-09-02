@@ -12,4 +12,5 @@ public interface ProducerProfileRepository  extends JpaRepository<ProducerProfil
     Optional<ProducerProfile> findByUser(User user);
     boolean existsByUser(User user);
     List<ProducerProfile> findByStatus(ProfileStatus status);
+    long countByStatus(ProfileStatus status);
 }

@@ -12,4 +12,5 @@ public interface VenueProfileRepository extends JpaRepository<VenueProfile,Long>
     Optional<VenueProfile> findByUser(User user);
     boolean existsByUser(User user);
     List<VenueProfile> findByStatus(ProfileStatus status);
+    long countByStatus(ProfileStatus status);
 }

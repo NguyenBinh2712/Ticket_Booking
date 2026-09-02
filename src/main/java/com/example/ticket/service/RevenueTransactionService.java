@@ -32,22 +32,17 @@ public class RevenueTransactionService {
         EventVenueContract contract = booking.getShowtime().getContract();
         BigDecimal total = booking.getTotalPrice();
 
-        // Cách A đã chốt: adminCommissionPercent (2.5%) khấu trừ trên TỔNG doanh thu, lấy từ MỖI BÊN
         BigDecimal commissionCut = total
                 .multiply(contract.getAdminCommissionPercent())
                 .divide(BigDecimal.valueOf(100), 2, RoundingMode.HALF_UP);
+        BigDecimal adminAmount = commissionCut.multiply(BigDecimal.valueOf(2));
 
         BigDecimal producerAmount = total
                 .multiply(contract.getProducerSharePercent())
                 .divide(BigDecimal.valueOf(100), 2, RoundingMode.HALF_UP)
                 .subtract(commissionCut);
+        BigDecimal venueAmount = total.subtract(producerAmount).subtract(adminAmount);
 
-        BigDecimal venueAmount = total
-                .multiply(contract.getVenueSharePercent())
-                .divide(BigDecimal.valueOf(100), 2, RoundingMode.HALF_UP)
-                .subtract(commissionCut);
-
-        BigDecimal adminAmount = commissionCut.multiply(BigDecimal.valueOf(2));
 
         RevenueTransaction transaction = RevenueTransaction.builder()
                 .booking(booking)
@@ -62,15 +57,14 @@ public class RevenueTransactionService {
         revenueTransactionRepository.save(transaction);
     }
 
-    // Dùng khi hủy vé/hoàn tiền TRƯỚC khi settle -- đảo ngược, không xóa (giữ audit trail)
+    // Dùng khi hủy vé/hoàn tiền trước khi settle -- đảo ngược, không xóa (giữ audit trail)
     public void reverseForBooking(Booking booking) {
         RevenueTransaction transaction = revenueTransactionRepository.findByBooking(booking)
                 .orElseThrow(() -> new AppException(ErrorCode.REVENUE_TRANSACTION_NOT_FOUND));
-
-        if (transaction.getStatus() == TransactionStatus.SETTLED) {
+        if (transaction.getStatus() == TransactionStatus.SETTLED || transaction.getSettlement() != null) {
+            // Đã SETTLED (khóa cứng) hoặc đã gom vào 1 đợt Settlement đang chờ trả (chưa PAID) -> không cho hoàn tự động
             throw new AppException(ErrorCode.TRANSACTION_ALREADY_SETTLED);
         }
-
         transaction.setStatus(TransactionStatus.REVERSED);
         revenueTransactionRepository.save(transaction);
     }

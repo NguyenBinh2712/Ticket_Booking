@@ -43,6 +43,10 @@ public class ReviewProfileService {
 
         validateReview(profile.getStatus(), request);
         profile.setStatus(request.getApprove() ? ProfileStatus.VERIFIED : ProfileStatus.REJECTED);
+        profile.setStatus(request.getApprove() ? ProfileStatus.VERIFIED : ProfileStatus.REJECTED);
+        if (!request.getApprove()) {
+            profile.setRejectReason(request.getRejectReason());
+        }
         producerProfileRepository.save(profile);
     }
 
@@ -52,6 +56,10 @@ public class ReviewProfileService {
 
         validateReview(profile.getStatus(), request);
         profile.setStatus(request.getApprove() ? ProfileStatus.VERIFIED : ProfileStatus.REJECTED);
+        profile.setStatus(request.getApprove() ? ProfileStatus.VERIFIED : ProfileStatus.REJECTED);
+        if (!request.getApprove()) {
+            profile.setRejectReason(request.getRejectReason());
+        }
         venueProfileRepository.save(profile);
     }
 

@@ -57,6 +57,8 @@ public class Booking {
     @OneToOne(mappedBy = "booking", cascade = CascadeType.ALL, orphanRemoval = true)
     private Payment payment;
 
+    @Column(name = "payment_deadline")
+    private LocalDateTime paymentDeadline;
     @PrePersist
     protected void onCreate() { createdAt = LocalDateTime.now(); }
 }

@@ -4,6 +4,7 @@ import com.example.ticket.dto.booking.BookingConfirmRequest;
 import com.example.ticket.dto.booking.BookingResponse;
 import com.example.ticket.entity.*;
 import com.example.ticket.enums.BookingStatus;
+import com.example.ticket.enums.ShowtimeStatus;
 import com.example.ticket.exception.AppException;
 import com.example.ticket.exception.ErrorCode;
 import com.example.ticket.repository.*;
@@ -12,10 +13,12 @@ import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
 import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
@@ -31,6 +34,7 @@ public class BookingService {
     SeatRepository seatRepository;
     UserRepository userRepository;
     SeatHoldService seatHoldService;
+    PaymentConfirmationService paymentConfirmationService;
 
     private User getCurrentUser() {
         String email = SecurityContextHolder.getContext().getAuthentication().getName();
@@ -43,11 +47,24 @@ public class BookingService {
         User user = getCurrentUser();
         Showtime showtime = showtimeRepository.findById(request.getShowtimeId())
                 .orElseThrow(() -> new AppException(ErrorCode.SHOWTIME_NOT_FOUND));
+        if (showtime.getStatus() != ShowtimeStatus.SCHEDULED) {
+            throw new AppException(ErrorCode.SHOWTIME_NOT_AVAILABLE);
+        }
+        if (showtime.getStartTime().isBefore(LocalDateTime.now())) {
+            throw new AppException(ErrorCode.SHOWTIME_NOT_AVAILABLE);
+        }
+        List<Long> requestedSeatIds = request.getSeatIds();
+        if (requestedSeatIds.stream().distinct().count() != requestedSeatIds.size()) {
+            throw new AppException(ErrorCode.NO_SEATS_SELECTED);
+        }
 
+        seatHoldService.verifyHeldByCurrentUser(request.getShowtimeId(), requestedSeatIds);
+        List<Seat> seats = seatRepository.findAllById(requestedSeatIds);
+        if (seats.size() != requestedSeatIds.size()) {
+            throw new AppException(ErrorCode.SEAT_NOT_FOUND);
+        }
         // Bước 1: xác nhận đúng user này đang giữ hết các ghế yêu cầu (lớp bảo vệ ở Redis)
         seatHoldService.verifyHeldByCurrentUser(request.getShowtimeId(), request.getSeatIds());
-
-        List<Seat> seats = seatRepository.findAllById(request.getSeatIds());
         BigDecimal total = BigDecimal.ZERO;
         List<BookingSeat> bookingSeats = new ArrayList<>();
 
@@ -55,7 +72,8 @@ public class BookingService {
                 .customer(user)
                 .showtime(showtime)
                 .bookingCode(generateBookingCode())
-                .status(BookingStatus.PENDING) // chờ thanh toán -- Cụm 8 sẽ chuyển CONFIRMED
+                .status(BookingStatus.PENDING) // chờ thanh toán
+                .paymentDeadline(LocalDateTime.now().plusMinutes(15))
                 .build();
 
         for (Seat seat : seats) {
@@ -77,7 +95,6 @@ public class BookingService {
         booking.setBookingSeats(bookingSeats);
 
         try {
-            // Bước 2: INSERT thật vào MySQL -- unique constraint (showtime_id, seat_id) là
             // lớp bảo vệ CUỐI CÙNG, hoạt động độc lập ngay cả khi Redis có lỗi hay hold đã hết hạn
             bookingRepository.save(booking);
         } catch (DataIntegrityViolationException e) {

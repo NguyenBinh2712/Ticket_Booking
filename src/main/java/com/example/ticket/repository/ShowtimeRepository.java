@@ -4,6 +4,7 @@ package com.example.ticket.repository;
 import com.example.ticket.entity.Event;
 import com.example.ticket.entity.Room;
 import com.example.ticket.entity.Showtime;
+import com.example.ticket.entity.VenueProfile;
 import com.example.ticket.enums.EventType;
 import com.example.ticket.enums.ShowtimeStatus;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -27,4 +28,6 @@ public interface ShowtimeRepository extends JpaRepository<Showtime, Long> {
             "ORDER BY s.startTime ASC")
     List<Showtime> searchPublicShowTimes(@Param("type") EventType type, @Param("city") String city);
 
+    List<Showtime> findByContract_VenueAndStatusAndStartTimeAfterOrderByStartTimeAsc(
+            VenueProfile venue, ShowtimeStatus status, LocalDateTime now);
 }
