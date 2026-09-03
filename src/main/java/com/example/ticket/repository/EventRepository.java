@@ -1,5 +1,6 @@
 package com.example.ticket.repository;
 
+import com.example.ticket.dto.event.EventResponse;
 import com.example.ticket.entity.Event;
 import com.example.ticket.entity.ProducerProfile;
 import com.example.ticket.enums.EventStatus;

@@ -19,6 +19,7 @@ public interface ShowtimeRepository extends JpaRepository<Showtime, Long> {
             Room room, ShowtimeStatus excludedStatus, LocalDateTime endTime, LocalDateTime startTime);
 
     List<Showtime> findByContract_EventOrderByStartTimeAsc(Event event);
+    List<Showtime> findByStatusAndEndTimeBefore(ShowtimeStatus status, LocalDateTime time);
 
     @Query("SELECT s FROM Showtime s " +
             "WHERE s.contract.event.status = 'PUBLISHED' " +

@@ -2,6 +2,7 @@ package com.example.ticket.service;
 
 import com.example.ticket.entity.Booking;
 import com.example.ticket.entity.Payment;
+import com.example.ticket.entity.User;
 import com.example.ticket.enums.BookingStatus;
 import com.example.ticket.enums.PaymentMethod;
 import com.example.ticket.enums.PaymentStatus;
@@ -43,18 +44,24 @@ public class MockPaymentService {
         return txnRef;
     }
 
-    public void simulateSuccess(String txnRef) {
+    public void simulateSuccess(String txnRef, User currentUser) {
         Payment payment = paymentRepository.findByTxnRef(txnRef)
                 .orElseThrow(() -> new AppException(ErrorCode.PAYMENT_NOT_FOUND));
+        if (!payment.getBooking().getCustomer().getId().equals(currentUser.getId())) {
+            throw new AppException(ErrorCode.BOOKING_NOT_OWNED_BY_USER);
+        }
         if (payment.getMethod() != PaymentMethod.MOCK_GATEWAY) {
             throw new AppException(ErrorCode.INVALID_PAYMENT_METHOD);
         }
         paymentConfirmationService.confirmSuccess(payment, "MOCK-" + System.currentTimeMillis(), "00");
     }
 
-    public void simulateFailure(String txnRef) {
+    public void simulateFailure(String txnRef, User currentUser) {
         Payment payment = paymentRepository.findByTxnRef(txnRef)
                 .orElseThrow(() -> new AppException(ErrorCode.PAYMENT_NOT_FOUND));
+        if (!payment.getBooking().getCustomer().getId().equals(currentUser.getId())) {
+            throw new AppException(ErrorCode.BOOKING_NOT_OWNED_BY_USER);
+        }
         if (payment.getMethod() != PaymentMethod.MOCK_GATEWAY) {
             throw new AppException(ErrorCode.INVALID_PAYMENT_METHOD);
         }

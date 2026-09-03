@@ -30,47 +30,80 @@ public class PaymentConfirmationService {
     BookingSeatRepository bookingSeatRepository;
     RevenueTransactionService revenueTransactionService;
 
-    public boolean confirmSuccess(Payment payment, String gatewayTransactionNo, String responseCode) {
+    public boolean confirmSuccess(Payment payment,  String gatewayTransactionNo, String responseCode) {
         if (payment.getStatus() == PaymentStatus.SUCCESS) {
             return false;
         }
-        // Chặn chuyển SUCCESS từ trạng thái không hợp lệ (VD: đã FAILED/REFUNDED trước đó)
         if (payment.getStatus() != PaymentStatus.PENDING) {
             throw new AppException(ErrorCode.PAYMENT_ALREADY_PROCESSED);
+        }
+        Booking booking = bookingRepository
+                .findByIdForUpdate(payment.getBooking().getId())
+                .orElseThrow(() ->
+                        new AppException(ErrorCode.BOOKING_NOT_FOUND));
+        if (booking.getStatus() != BookingStatus.PENDING) {
+            payment.setStatus(PaymentStatus.FAILED);
+            payment.setResponseCode("BOOKING_NOT_PENDING");
+            return false;
+        }
+
+        if (booking.getPaymentDeadline() == null || !booking.getPaymentDeadline().isAfter(LocalDateTime.now())) {
+            payment.setStatus(PaymentStatus.FAILED);
+            payment.setResponseCode("BOOKING_PAYMENT_DEADLINE_EXPIRED");
+            expireBooking(booking);
+            return false;
         }
 
         payment.setGatewayTransactionNo(gatewayTransactionNo);
         payment.setResponseCode(responseCode);
         payment.setStatus(PaymentStatus.SUCCESS);
         payment.setPaidAt(LocalDateTime.now());
-        paymentRepository.save(payment);
-
-        Booking booking = payment.getBooking();
         booking.setStatus(BookingStatus.CONFIRMED);
+        paymentRepository.save(payment);
         bookingRepository.save(booking);
 
         revenueTransactionService.createForBooking(booking);
+
         return true;
     }
-
-    // SỬA: thanh toán thất bại -> hủy Booking + xóa hết BookingSeat -> ghế nhả ra ngay lập tức
     public void markFailed(Payment payment, String responseCode) {
+        if (payment.getStatus() != PaymentStatus.PENDING) {
+            return;
+        }
         payment.setResponseCode(responseCode);
         payment.setStatus(PaymentStatus.FAILED);
         paymentRepository.save(payment);
-
-        releaseBooking(payment.getBooking());
+        cancelBooking(payment.getBooking());
     }
 
-    // Dùng chung cho cả markFailed() và job dọn booking hết hạn (bên dưới)
-    public void releaseBooking(Booking booking) {
+
+    public void cancelBooking(Booking booking) {
         if (booking.getStatus() == BookingStatus.CONFIRMED) {
-            return; // đã thanh toán thành công rồi thì không được đụng vào
+            throw new AppException(ErrorCode.BOOKING_CANCEL_NOT_ALLOWED);
         }
-        List<BookingSeat> seats = bookingSeatRepository.findByShowtimeId(booking.getShowtime().getId())
-                .stream().filter(bs -> bs.getBooking().getId().equals(booking.getId())).toList();
-        bookingSeatRepository.deleteAll(seats); // XÓA hẳn -> unique constraint (showtime_id, seat_id) rảnh ra
+
+        deleteBookingSeats(booking);
+
         booking.setStatus(BookingStatus.CANCELLED);
         bookingRepository.save(booking);
     }
+
+    public void expireBooking(Booking booking) {
+        if (booking.getStatus() != BookingStatus.PENDING) {
+            return;
+        }
+
+        deleteBookingSeats(booking);
+
+        booking.setStatus(BookingStatus.EXPIRED);
+        bookingRepository.save(booking);
+    }
+
+    private void deleteBookingSeats(Booking booking) {
+        List<BookingSeat> seats =
+                bookingSeatRepository.findByBooking(booking);
+
+        bookingSeatRepository.deleteAll(seats);
+    }
+
 }

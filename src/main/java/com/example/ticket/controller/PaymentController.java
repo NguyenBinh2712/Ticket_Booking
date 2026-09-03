@@ -70,7 +70,8 @@ public class PaymentController {
     @PreAuthorize("isAuthenticated()")
     @PostMapping("/mock/success")
     public ApiResponse<Void> mockSuccess(@RequestParam String txnRef) {
-        mockPaymentService.simulateSuccess(txnRef);
+        User user = getCurrentUser();
+        mockPaymentService.simulateSuccess(txnRef,user);
         ApiResponse<Void> response = new ApiResponse<>();
         response.setMessage("Thanh toán (giả lập) thành công");
         return response;
@@ -79,7 +80,8 @@ public class PaymentController {
     @PreAuthorize("isAuthenticated()")
     @PostMapping("/mock/fail")
     public ApiResponse<Void> mockFail(@RequestParam String txnRef) {
-        mockPaymentService.simulateFailure(txnRef);
+        User user = getCurrentUser();
+        mockPaymentService.simulateFailure(txnRef, user);
         ApiResponse<Void> response = new ApiResponse<>();
         response.setMessage("Thanh toán (giả lập) thất bại");
         return response;

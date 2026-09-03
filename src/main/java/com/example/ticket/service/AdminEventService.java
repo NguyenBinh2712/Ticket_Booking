@@ -1,6 +1,7 @@
 package com.example.ticket.service;
 
 import com.example.ticket.dto.contract.*;
+import com.example.ticket.dto.event.EventResponse;
 import com.example.ticket.entity.*;
 import com.example.ticket.enums.ContractStatus;
 import com.example.ticket.enums.EventStatus;
@@ -51,22 +52,28 @@ public class AdminEventService {
     public ContractResponse createContractOffer(Long eventId, ContractCreateRequest request) {
         Event event = eventRepository.findById(eventId)
                 .orElseThrow(() -> new AppException(ErrorCode.EVENT_NOT_FOUND));
-
+        if (event.getStatus() != EventStatus.MATCHING) {
+            throw new AppException(ErrorCode.INVALID_EVENT_STATUS_TRANSITION);
+        }
         VenueProfile venue = venueProfileRepository.findById(request.getVenueId())
                 .orElseThrow(() -> new AppException(ErrorCode.VENUE_PROFILE_NOT_FOUND));
         if (venue.getStatus() != ProfileStatus.VERIFIED) {
             throw new AppException(ErrorCode.VENUE_NOT_VERIFIED);
         }
-
+        BigDecimal adminPercent = new BigDecimal("2.5");
         BigDecimal producerPercent = event.getProducerSharePercent();
-        BigDecimal venuePercent = BigDecimal.valueOf(100).subtract(producerPercent);
+        BigDecimal venuePercent = BigDecimal.valueOf(100)
+                .subtract(producerPercent)
+                .subtract(adminPercent);
+        if(venuePercent.signum() < 0) {
+            throw new AppException(ErrorCode.INVALID_REVENUE_SPLIT);}
 
         EventVenueContract contract = EventVenueContract.builder()
                 .event(event)
                 .venue(venue)
                 .producerSharePercent(producerPercent)
                 .venueSharePercent(venuePercent)
-                .adminCommissionPercent(new BigDecimal("2.5")) // Cách A đã chốt, đóng băng tại đây
+                .adminCommissionPercent(new BigDecimal("2.5"))
                 .ticketBasePrice(request.getTicketBasePrice())
                 .status(ContractStatus.PROPOSED)
                 .build();
@@ -75,7 +82,6 @@ public class AdminEventService {
         if (event.getStatus() == EventStatus.MATCHING) {
             eventService.changeStatus(event, EventStatus.PENDING_VENUE_APPROVAL, "Gửi lời mời tới " + venue.getVenueName());
         }
-
         return toResponse(contract);
     }
 

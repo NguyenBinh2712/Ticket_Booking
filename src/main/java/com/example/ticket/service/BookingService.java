@@ -4,6 +4,7 @@ import com.example.ticket.dto.booking.BookingConfirmRequest;
 import com.example.ticket.dto.booking.BookingResponse;
 import com.example.ticket.entity.*;
 import com.example.ticket.enums.BookingStatus;
+import com.example.ticket.enums.PaymentStatus;
 import com.example.ticket.enums.ShowtimeStatus;
 import com.example.ticket.exception.AppException;
 import com.example.ticket.exception.ErrorCode;
@@ -35,6 +36,8 @@ public class BookingService {
     UserRepository userRepository;
     SeatHoldService seatHoldService;
     PaymentConfirmationService paymentConfirmationService;
+    PaymentRepository paymentRepository;
+    RevenueTransactionService revenueTransactionService;
 
     private User getCurrentUser() {
         String email = SecurityContextHolder.getContext().getAuthentication().getName();
@@ -95,15 +98,12 @@ public class BookingService {
         booking.setBookingSeats(bookingSeats);
 
         try {
-            // lớp bảo vệ CUỐI CÙNG, hoạt động độc lập ngay cả khi Redis có lỗi hay hold đã hết hạn
             bookingRepository.save(booking);
         } catch (DataIntegrityViolationException e) {
             throw new AppException(ErrorCode.SEAT_ALREADY_BOOKED);
         }
-
-        // Ghế đã "chốt" trong DB -- không cần giữ ở Redis nữa, nhả ngay để tối ưu bộ nhớ
+        // Ghế đã "chốt" trong DB -> không cần giữ ở Redis nữa
         seatHoldService.clearHold(request.getShowtimeId(), request.getSeatIds());
-
         return toResponse(booking, seats);
     }
 
@@ -127,6 +127,38 @@ public class BookingService {
             code = "BK" + UUID.randomUUID().toString().substring(0, 8).toUpperCase();
         } while (bookingRepository.existsByBookingCode(code));
         return code;
+    }
+
+    public void cancelMyBooking(Long bookingId) {
+        User user = getCurrentUser();
+        Booking booking = bookingRepository.findByIdAndCustomer(bookingId, user)
+                .orElseThrow(() -> new AppException(ErrorCode.BOOKING_NOT_FOUND));
+
+        if (booking.getStatus() == BookingStatus.CANCELLED || booking.getStatus() == BookingStatus.EXPIRED) {
+            throw new AppException(ErrorCode.BOOKING_ALREADY_CANCELLED);
+        }
+        if (booking.getStatus() == BookingStatus.CONFIRMED) {
+            // Đã thanh toán -> không cho hủy
+            throw new AppException(ErrorCode.BOOKING_CANCEL_NOT_ALLOWED);
+        }
+        paymentConfirmationService.cancelBooking(booking); // nhả ghế + set CANCELLED
+    }
+
+    public void refundBooking(Long bookingId) {
+        Booking booking = bookingRepository.findById(bookingId)
+                .orElseThrow(() -> new AppException(ErrorCode.BOOKING_NOT_FOUND));
+        if (booking.getStatus() != BookingStatus.CONFIRMED) {
+            throw new AppException(ErrorCode.BOOKING_CANCEL_NOT_ALLOWED);
+        }
+
+        revenueTransactionService.reverseForBooking(booking); //  chặn nếu đã SETTLED
+
+        Payment payment = paymentRepository.findByBooking(booking)
+                .orElseThrow(() -> new AppException(ErrorCode.PAYMENT_NOT_FOUND));
+        payment.setStatus(PaymentStatus.REFUNDED);
+        paymentRepository.save(payment);
+
+        paymentConfirmationService.cancelBooking(booking); // nhả ghế, set booking về CANCELLED
     }
 
     private BookingResponse toResponse(Booking booking, List<Seat> seats) {

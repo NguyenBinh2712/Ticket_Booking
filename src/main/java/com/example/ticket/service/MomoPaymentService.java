@@ -156,13 +156,34 @@ public class MomoPaymentService {
         }
     }
 
-    private void savePendingPayment(Booking booking, String txnRef) {
-        Payment payment = paymentRepository.findByBooking(booking)
-                .orElse(Payment.builder().booking(booking).build());
+    private void savePendingPayment(
+            Booking booking,
+            String txnRef
+    ) {
+        Payment payment = paymentRepository
+                .findByBooking(booking)
+                .orElse(null);
+
+        if (payment != null &&
+                payment.getStatus() == PaymentStatus.PENDING) {
+
+            throw new AppException(ErrorCode.PAYMENT_ALREADY_PROCESSED);
+        }
+
+        if (payment == null) {
+            payment = Payment.builder()
+                    .booking(booking)
+                    .build();
+        }
+
         payment.setMethod(PaymentMethod.MOMO);
         payment.setAmount(booking.getTotalPrice());
         payment.setTxnRef(txnRef);
         payment.setStatus(PaymentStatus.PENDING);
+        payment.setGatewayTransactionNo(null);
+        payment.setResponseCode(null);
+        payment.setPaidAt(null);
+
         paymentRepository.save(payment);
     }
 }

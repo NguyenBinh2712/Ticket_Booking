@@ -25,7 +25,7 @@ public class BookingExpiryScheduler {
         List<Booking> expired = bookingRepository
                 .findByStatusAndPaymentDeadlineBefore(BookingStatus.PENDING, LocalDateTime.now());
         for (Booking booking : expired) {
-            paymentConfirmationService.releaseBooking(booking);
+            paymentConfirmationService.expireBooking(booking);
         }
     }
 }

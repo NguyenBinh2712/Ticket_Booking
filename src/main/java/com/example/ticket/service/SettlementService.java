@@ -37,17 +37,16 @@ public class SettlementService {
         if (!request.getPeriodTo().isAfter(request.getPeriodFrom())) {
             throw new AppException(ErrorCode.SETTLEMENT_PERIOD_INVALID);
         }
-
-        List<RevenueTransaction> transactions = revenueTransactionRepository
-                .findUnsettledInPeriod(request.getPeriodFrom(), request.getPeriodTo());
-
+        List<RevenueTransaction> transactions = revenueTransactionRepository.findUnsettledInPeriod(
+                request.getPeriodFrom().atStartOfDay(),
+                request.getPeriodTo().plusDays(1).atStartOfDay());
         if (transactions.isEmpty()) {
             throw new AppException(ErrorCode.SETTLEMENT_NO_TRANSACTIONS);
         }
 
         List<Settlement> results = new java.util.ArrayList<>();
 
-        // Nhóm theo Producer -- key là producerProfile.id
+        // Nhóm theo Producer
         Map<Long, List<RevenueTransaction>> byProducer = transactions.stream()
                 .collect(Collectors.groupingBy(rt -> rt.getContract().getEvent().getProducer().getId()));
         for (Map.Entry<Long, List<RevenueTransaction>> entry : byProducer.entrySet()) {
@@ -55,14 +54,13 @@ public class SettlementService {
                     RevenueTransaction::getProducerAmount, request));
         }
 
-        // Nhóm theo Venue -- key là venueProfile.id
+        // Nhóm theo Venue
         Map<Long, List<RevenueTransaction>> byVenue = transactions.stream()
                 .collect(Collectors.groupingBy(rt -> rt.getContract().getVenue().getId()));
         for (Map.Entry<Long, List<RevenueTransaction>> entry : byVenue.entrySet()) {
             results.add(buildSettlement(PartnerType.VENUE, entry.getKey(), entry.getValue(),
                     RevenueTransaction::getVenueAmount, request));
         }
-
         return results.stream().map(this::toResponse).collect(Collectors.toList());
     }
 
@@ -83,13 +81,11 @@ public class SettlementService {
                 .build();
         settlement = settlementRepository.save(settlement);
 
-        // Gắn settlement vào từng transaction -- CHƯA đổi status sang SETTLED,
-        // chỉ "khóa mềm" (không cho gom lại lần 2 nhờ điều kiện settlement IS NULL ở query trên)
+        // Gắn settlement vào từng transaction
         for (RevenueTransaction tx : txs) {
             tx.setSettlement(settlement);
         }
-        // txs đã là entity quản lý bởi Hibernate (lấy từ repository trong cùng transaction) -> tự flush khi commit
-
+        revenueTransactionRepository.saveAll(txs);
         return settlement;
     }
 
@@ -98,7 +94,7 @@ public class SettlementService {
                 .stream().map(this::toResponse).collect(Collectors.toList());
     }
 
-    // Admin xác nhận đã thực sự chuyển tiền -- ĐÂY mới là lúc khóa cứng transaction (SETTLED)
+    // Admin xác nhận đã thực sự chuyển tiền ->  khóa cứng transaction (SETTLED)
     public void markAsPaid(Long settlementId) {
         Settlement settlement = settlementRepository.findById(settlementId)
                 .orElseThrow(() -> new AppException(ErrorCode.SETTLEMENT_NOT_FOUND));
@@ -115,13 +111,13 @@ public class SettlementService {
         for (RevenueTransaction tx : transactions) {
             tx.setStatus(TransactionStatus.SETTLED);
         }
+
         revenueTransactionRepository.saveAll(transactions);
     }
 
     private SettlementResponse toResponse(Settlement s) {
         int count = revenueTransactionRepository.findBySettlement(s).size();
-        String partnerName = null; // để trống, FE tự tra theo partnerId nếu cần hiển thị tên -- tránh phụ thuộc chéo repository ở đây
-
+        String partnerName = null;
         return SettlementResponse.builder()
                 .id(s.getId())
                 .partnerType(s.getPartnerType())

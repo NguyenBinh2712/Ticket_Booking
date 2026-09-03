@@ -4,6 +4,7 @@ import com.example.ticket.constant.RedisKey;
 import com.example.ticket.dto.booking.HoldSeatRequest;
 import com.example.ticket.dto.booking.HoldSeatResponse;
 import com.example.ticket.entity.*;
+import com.example.ticket.enums.RoomStatus;
 import com.example.ticket.enums.ShowtimeStatus;
 import com.example.ticket.exception.AppException;
 import com.example.ticket.exception.ErrorCode;
@@ -17,6 +18,7 @@ import org.springframework.stereotype.Service;
 
 import java.time.Duration;
 import java.time.Instant;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -46,8 +48,14 @@ public class SeatHoldService {
         if (showtime.getStatus() != ShowtimeStatus.SCHEDULED) {
             throw new AppException(ErrorCode.SHOWTIME_NOT_AVAILABLE);
         }
+        if (showtime.getStartTime().isBefore(LocalDateTime.now())) {
+            throw new AppException(ErrorCode.SHOWTIME_NOT_AVAILABLE);
+        }
 
         Room room = showtime.getContract().getRoom();
+        if (room.getStatus() != RoomStatus.ACTIVE) {
+            throw new AppException(ErrorCode.ROOM_IN_MAINTENANCE);
+        }
         List<Long> acquiredKeys = new ArrayList<>();
 
         try {

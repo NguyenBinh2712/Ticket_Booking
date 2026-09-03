@@ -13,6 +13,7 @@ import com.example.ticket.enums.UserStatus;
 import com.example.ticket.exception.AppException;
 import com.example.ticket.exception.ErrorCode;
 import com.example.ticket.repository.OtpRepository;
+import com.example.ticket.repository.RefreshTokenRepository;
 import com.example.ticket.repository.UserRepository;
 import jakarta.transaction.Transactional;
 import lombok.AccessLevel;
@@ -44,6 +45,7 @@ public class AuthService {
     MailService mailService;
     OtpRepository otpRepository;
     RedisTemplate<String, Object> redisTemplate;
+    RefreshTokenRepository refreshTokenRepository;
 
     public AuthResponse login(AuthRequest request){
         User user=userRepository.findUserByEmail(request.getEmail())
@@ -228,7 +230,7 @@ public class AuthService {
         user.setPassword(passwordEncoder.encode(request.getNewPassword()));
         otpRepository.delete(otp);
         userRepository.save(user);
-
+        refreshTokenRepository.deleteByUser(user);
         mailService.sendEmail(
                 request.getEmail(),
                 "Thông báo thay đổi mật khẩu",

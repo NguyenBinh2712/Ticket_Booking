@@ -43,4 +43,20 @@ public class BookingController {
         response.setResult(bookingService.getMyBookingDetail(id));
         return response;
     }
+    @PreAuthorize("isAuthenticated()")
+    @PostMapping("/me/{id}/cancel")
+    public ApiResponse<Void> cancelMyBooking(@PathVariable Long id) {
+        bookingService.cancelMyBooking(id);
+        ApiResponse<Void> response = new ApiResponse<>();
+        response.setMessage("Đã hủy đơn đặt vé");
+        return response;
+    }
+    @PutMapping("/{id}/refund")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ApiResponse<Void> refund(@PathVariable Long id) {
+        bookingService.refundBooking(id);
+        ApiResponse<Void> response = new ApiResponse<>();
+        response.setMessage("Đã hoàn tiền và hủy đơn đặt vé");
+        return response;
+    }
 }

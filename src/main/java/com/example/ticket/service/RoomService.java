@@ -56,7 +56,7 @@ public class RoomService {
         SeatType defaultSeatType = seatTypeRepository.findById(request.getDefaultSeatTypeId())
                 .orElseThrow(() -> new AppException(ErrorCode.SEAT_TYPE_NOT_FOUND));
 
-        // Khu VIP optional -- chỉ áp dụng nếu venue thực sự khai báo (vipRows/vipColumns > 0)
+        // Khu VIP optional
         boolean hasVipZone = request.getVipRows() != null && request.getVipRows() > 0
                 && request.getVipColumns() != null && request.getVipColumns() > 0;
 

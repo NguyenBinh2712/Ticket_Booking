@@ -31,6 +31,8 @@ public enum ErrorCode {
     PROFILE_NOT_VERIFIED(1104, "Hồ sơ chưa được xác minh, không thể thực hiện hành động này", HttpStatus.FORBIDDEN),
     PROFILE_ALREADY_REVIEWED(1105, "Hồ sơ đã được xử lý trước đó", HttpStatus.CONFLICT),
     PROFILE_REJECTED(1106, "Hồ sơ đã bị từ chối", HttpStatus.FORBIDDEN),
+    INVALID_REVENUE_SPLIT(1107,"Tỷ lệ phân chia doanh thu phải bằng 100%",HttpStatus.BAD_REQUEST),
+
 
     // Room & Seat
     ROOM_NOT_FOUND(1200, "Không tìm thấy phòng", HttpStatus.NOT_FOUND),

@@ -22,9 +22,8 @@ public class EventRequest {
     private String description;
     private String posterUrl;
 
-    @NotNull(message = "Phải đề xuất % lợi nhuận")
-    @DecimalMin(value = "0.0", message = "% phải >= 0")
-    @DecimalMax(value = "97.5", message = "% phải <= 97.5 ")
+    @DecimalMin(value = "2.5", message = "% phải >= 2.5 ")
+    @DecimalMax(value = "97.5", message = "% phải <= 97.5")
     private BigDecimal producerSharePercent;
 
     private Map<String, Object> attributes;

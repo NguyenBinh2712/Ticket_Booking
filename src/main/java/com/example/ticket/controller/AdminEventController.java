@@ -2,6 +2,7 @@ package com.example.ticket.controller;
 
 import com.example.ticket.dto.ApiResponse;
 import com.example.ticket.dto.contract.*;
+import com.example.ticket.dto.event.EventResponse;
 import com.example.ticket.entity.Event;
 import com.example.ticket.service.AdminEventService;
 import jakarta.validation.Valid;
